@@ -103,7 +103,7 @@ asyncLoad("https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js", "j
     asyncLoad("https://cdn.firebase.com/js/client/2.2.7/firebase.js", "js", requestToken));
 
 function requestToken() {
-    google.script.run.withSuccessHandler(AuthClient).makeToken()
+    google.script.run.withSuccessHandler(AuthClient).makeToken();
 }
 
 function AuthClient(t) {
