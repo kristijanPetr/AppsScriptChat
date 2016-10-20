@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <title>5 Живой чат / Live chat </title>
+    <!--    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/style.css"> -->
+    
+    <?!= include('normalize'); ?>
+    <?!= include('style'); ?>
+</head>
+
+<body>
+
+         
+        <div class="ui">
+            <div class="left-menu">
+                <form action="#" class="search">
+                    <input placeholder="search..." type="search" name="" id="">
+                    <input type="submit" value="&#xf002;">
+                </form>
+                <menu class="list-friends">
+                    <li>
+                        <img width="50" height="50" src="https://api.adorable.io/avatar/200/99">
+                        <div class="info">
+                            <div class="user">Юния Гапонович</div>
+                            <div class="status on"> online</div>
+                        </div>
+                    </li>
+                    <li>
+                        <img width="50" height="50" src="https://api.adorable.io/avatar/200/1">
+                        <div class="info">
+                            <div class="user">Name Fam</div>
+                            <div class="status on"> online</div>
+                        </div>
+                    </li>
+                  
+                </menu>
+            </div>
+            <div class="chat">
+                <div class="top">
+                    <div class="avatar">
+                        <img width="50" height="50" src="https://api.adorable.io/avatar/200/99">
+                    </div>
+                    <div class="info">
+                        <div class="name">Юния Гапонович</div>
+                        <div class="count">already 1 902 messages</div>
+                    </div>
+                    <i class="fa fa-star"></i>
+                </div>
+                <ul class="messages">
+                    <li class="i">
+                        <div class="head">
+                            <span class="time">10:13 AM, Today</span>
+                            <span class="name">Буль</span>
+                        </div>
+                        <div class="message">Привет!</div>
+                    </li>
+                    <li class="i">
+                        <div class="head">
+                            <span class="time">10:13 AM, Today</span>
+                            <span class="name">Буль</span>
+                        </div>
+                        <div class="message">)</div>
+                    </li>
+                    <li class="i">
+                        <div class="head">
+                            <span class="time">10:14 AM, Today</span>
+                            <span class="name">Буль</span>
+                        </div>
+                        <div class="message">М не счастья..</div>
+                    </li>
+                    <li class="friend-with-a-SVAGina">
+                        <div class="head">
+                            <span class="name">Юния</span>
+                            <span class="time">10:15 AM, Today</span>
+                        </div>
+                        <div class="message">чего тебе?</div>
+                    </li>
+                </ul>
+                <div class="write-form">
+                    <textarea placeholder="Type your message" name="e" id="texxt" rows="2"></textarea>
+                    <i class="fa fa-picture-o"></i>
+                    <i class="fa fa-file-o"></i>
+                    <span class="send">Send</span>
+                </div>
+            </div>
+        </div>
+           <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
+        <script src='https://cdnjs.cloudflare.com/ajax/libs/nicescroll/3.5.4/jquery.nicescroll.js'></script>
+         <?!= include('index_js'); ?>
+</body>
+
+
+<script>
+var firebaseURL = 'https://fir-notificaiton.firebaseio.com';
+var userToken;
+var clientId;
+var myStatus;
+var onlineClients;
+var notificationMenuHeader;
+var notificationMenu;
+var notificationMenuItems;
+var notificationMenuButton;
+var notificationSwitchButton;
+    asyncLoad("https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js", "js",
+    asyncLoad("https://cdn.firebase.com/js/client/2.2.7/firebase.js", "js", requestToken));
+
+function requestToken() {
+    google.script.run.withSuccessHandler(AuthClient).makeToken()
+}
+
+function AuthClient(t) {
+    var ref = new Firebase(firebaseURL);
+    ref.authWithCustomToken(t, function(error, authData) {
+        if (error) {
+            console.log("Login Failed!", error);
+        } else {
+            console.log("Login Succeeded!", authData);
+            userToken = authData;
+            google.script.run
+                .withSuccessHandler(watchOnlineStatus)
+                .registerClient(authData.auth)
+        }
+    });
+}
+
+function watchOnlineStatus(user) {
+    jquerySetup();
+    var myConnectionsRef = new Firebase(firebaseURL + '/users/' + user + '/connections');
+    var onlineUsers = new Firebase(firebaseURL + '/online');
+    var lastOnlineRef = new Firebase(firebaseURL + '/users/' + user + '/lastOnline');
+    var connectedRef = new Firebase(firebaseURL + '/.info/connected');
+    connectedRef.on('value', function(snap) {
+        if (snap.val() === true) {
+            var con = myConnectionsRef.push(true);
+            con.onDisconnect().remove();
+
+            var pubCon = onlineUsers.push(userToken.auth);
+
+
+            pubCon.onDisconnect().remove();
+            lastOnlineRef.onDisconnect().set(Firebase.ServerValue.TIMESTAMP);
+            myStatus.text("Connected");
+
+            setupDataWatching();
+            setupNotifications(user);
+        } else {
+            myStatus.text("Disconnected");
+        }
+    });
+}
+
+function jquerySetup() {
+   $("#kopce").on('click',function(){
+   //      var msg = $("#kopce").val();
+   var msg = "sto ima ? ";
+      google.script.run.withSuccessHandler(function(){
+          
+      }).sendTestMessage(msg);
+   });
+    myStatus = $("#myOnlineStatus");
+    onlineClients = $("#onlineUsers");
+    notificationMenu = $('#notificationMenu');
+    notificationMenuButton = $('#notificationButton');
+    notificationMenuHeader = $('#notificationMenuHeader')
+    notificationMenuItems = $('#notificationItems');
+    notificationSwitchButton = $('#notificationSwitchButton');
+    notificationMenuButton.click(function() {
+        var dialog = document.getElementById('notificationMenu');
+        dialog.open();
+    });
+    notificationMenu[0].addEventListener('iron-overlay-closed', function() {
+
+        var user = userToken.auth.uid;
+        notificationMenuHeader.text("notifications");
+        notificationSwitchButton.show();
+        setupNotifications(user);
+
+    });
+}
+
+function setupDataWatching() {
+    var onlineUsers = new Firebase(firebaseURL + '/online');
+    var onlineSnapshot;
+    onlineUsers.on('value', function(dataSnapshot) {
+        var uniqueUsers = {};
+        onlineClients.empty();
+        onlineSnapshot = dataSnapshot.val();
+
+        for (var i in onlineSnapshot) {
+            if (!(onlineSnapshot[i].displayName in uniqueUsers)) {
+                uniqueUsers[onlineSnapshot[i].displayName] = {};
+                uniqueUsers[onlineSnapshot[i].displayName].uid = onlineSnapshot[i].uid;
+                uniqueUsers[onlineSnapshot[i].displayName].image = onlineSnapshot[i].image;
+            }
+        }
+
+
+        for (user in uniqueUsers)
+            onlineClients.append('<paper-item  data-uid="' + uniqueUsers[user].uid + '" role="listitem"><paper-item-body><div><img class="profileImage" src="' +
+                uniqueUsers[user].image + '"><span>' +
+                user + '</span></div></paper-item-body></paper-item>');
+    });
+
+}
+
+function setupNotifications(user) {
+    var myNotifications = new Firebase(firebaseURL + '/users/' + user + '/notifications');
+    myNotifications.on('value', function(s) {
+        notificationMenuItems.empty();
+        for (var i in s.val()) {
+            if (s.val()[i].status == "unviewed") {
+                if (notificationMenuButton.hasClass("white")) {
+                    notificationMenuButton.removeClass("white").addClass("red");
+                }
+                notificationMenuItems.append('<paper-material class="notificationCard" elevation="2" ><paper-icon-button onclick="ackNotification(\'' + i + '\');" icon="check"></paper-icon-button>' + s.val()[i].notification + '</paper-material>');
+            }
+        }
+    });
+}
+
+function viewPreviousNotifications() {
+    notificationMenuHeader.text("previous notifications");
+    notificationSwitchButton.hide();
+    var user = userToken.auth.uid;
+    var myNotifications = new Firebase(firebaseURL + '/users/' + user + '/notifications');
+    myNotifications.once('value', function(s) {
+        notificationMenuItems.empty();
+        for (var i in s.val()) {
+            if (s.val()[i].status == "viewed") {
+                notificationMenuItems.append('<paper-material class="notificationCard" elevation="2" >' + s.val()[i].notification + '</paper-material>');
+            }
+        }
+    });
+}
+
+function ackNotification(notificationId) {
+    var user = userToken.auth.uid;
+
+    var thisNotification = new Firebase(firebaseURL + '/users/' + user + '/notifications/' + notificationId);
+    var res = thisNotification.update({
+        "status": "viewed"
+    });
+    if (notificationMenuItems.children().length < 1) {
+        notificationMenuButton.removeClass("red").addClass("white");
+    }
+
+}
+
+function asyncLoad(filename, filetype, callback) {
+    if (filetype == "js") { //if filename is a external JavaScript file
+        var fileref = document.createElement('script')
+        fileref.setAttribute("type", "text/javascript")
+        fileref.setAttribute("src", filename)
+    } else if (filetype == "css") { //if filename is an external CSS file
+        var fileref = document.createElement("link")
+        fileref.setAttribute("rel", "stylesheet")
+        fileref.setAttribute("type", "text/css")
+        fileref.setAttribute("href", filename)
+    }
+    if (typeof fileref != "undefined") {
+        document.getElementsByTagName("head")[0].appendChild(fileref);
+
+        if (callback) {
+            callback();
+        }
+    }
+}
+</script>
+
+
+</html>
