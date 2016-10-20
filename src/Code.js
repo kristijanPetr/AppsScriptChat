@@ -5,7 +5,7 @@ var curUser = Plus.People.get('me');
 
 
 function doGet() {
-  return  HtmlService.createTemplateFromFile('index').evaluate().setTitle('Chat App').setSandboxMode(HtmlService.SandboxMode.IFRAME);
+  return  HtmlService.createTemplateFromFile('index_chat').evaluate().setTitle('Chat App').setSandboxMode(HtmlService.SandboxMode.IFRAME);
 }
 
 function include(filename) {
